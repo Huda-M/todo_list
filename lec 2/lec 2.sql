@@ -1,0 +1,24 @@
+CREATE TABLE `users` (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE `users_phone` (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    phone CHAR(15) NOT NULL,
+    user_id INT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE `tasks` (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    content TEXT,
+    priority INT DEFAULT 1,
+    deadline DATETIME DEFAULT (CURRENT_TIMESTAMP + INTERVAL 1 DAY),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
