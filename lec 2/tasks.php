@@ -1,15 +1,16 @@
 <?php
+session_start();
+include_once "validation.php";
+include_once "functions.php";
 include("db_connection.php");
-$errors = [];
-
 
 if (isset($_GET['delete'])) {
     $delete_id = (int)$_GET['delete'];
     mysqli_query($conn, "DELETE FROM tasks WHERE id = $delete_id");
+    setMessage('success', 'Task deleted successfully');
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
-
 
 if (isset($_GET['edit'])) {
     $edit_id = (int)$_GET['edit'];
@@ -22,52 +23,52 @@ if (isset($_GET['edit'])) {
     $edit_task = mysqli_fetch_assoc($edit_query);
 }
 
-
 if ($_SERVER['REQUEST_METHOD'] == "POST") {
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $content = mysqli_real_escape_string($conn, $_POST['content']);
     $priority = (int)$_POST['priority'];
     $user_id = (int)$_POST['user_id'];
-    
+
+
     if (isset($_POST['create'])) {
         $sql = "INSERT INTO tasks 
-               (title, content, priority, user_id, deadline, created_at) 
-               VALUES ('$title', '$content', $priority, $user_id, 
-               DATE_ADD(NOW(), INTERVAL 1 DAY), NOW())";
-        
+                (title, content, priority, user_id, deadline, created_at) 
+                VALUES ('$title', '$content', $priority, $user_id, 
+                DATE_ADD(NOW(), INTERVAL 1 DAY), NOW())";
+
         if (mysqli_query($conn, $sql)) {
+            setMessage('success', 'Task created successfully');
             header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
-            $errors[] = "Error: " . mysqli_error($conn);
+            setMessage('danger', "Error: " . mysqli_error($conn));
         }
     }
-    
+
     if (isset($_POST['update']) && isset($_GET['edit'])) {
         $id = (int)$_GET['edit'];
         $sql = "UPDATE tasks SET 
-               title='$title', 
-               content='$content', 
-               priority=$priority, 
-               user_id=$user_id 
-               WHERE id=$id";
-        
+                title='$title', 
+                content='$content', 
+                priority=$priority, 
+                user_id=$user_id 
+                WHERE id=$id";
+
         if (mysqli_query($conn, $sql)) {
+            setMessage('success', 'Task updated successfully');
             header("Location: " . $_SERVER['PHP_SELF']);
             exit();
         } else {
-            $errors[] = "Error: " . mysqli_error($conn);
+            setMessage('danger', "Error: " . mysqli_error($conn));
         }
     }
 }
-
 
 $tasks_query = mysqli_query($conn, 
     "SELECT tasks.*, users.name AS user_name 
      FROM tasks 
      LEFT JOIN users ON tasks.user_id = users.id"
 );
-
 
 $users = mysqli_query($conn, "SELECT id, name FROM users");
 ?>
@@ -82,9 +83,7 @@ $users = mysqli_query($conn, "SELECT id, name FROM users");
 </head>
 <body>
     <div class="container mt-5">
-        <?php foreach ($errors as $error): ?>
-            <div class="alert alert-danger"><?= $error ?></div>
-        <?php endforeach; ?>
+        <?php showMessage(); ?>
 
         <h2><?= isset($edit_task) ? "Edit Task" : "Add Task" ?></h2>
         <form method="post">
@@ -134,7 +133,7 @@ $users = mysqli_query($conn, "SELECT id, name FROM users");
                             </small>
                         </p>
                         <a href="?edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
-                        <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger">Delete</a>
+                        <a href="?delete=<?= $row['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this task?');">Delete</a>
                     </div>
                 </div>
             <?php endwhile; ?>
